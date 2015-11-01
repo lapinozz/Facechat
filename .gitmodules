@@ -1,0 +1,3 @@
+[submodule "extlib/cpr"]
+	path = extlib/cpr
+	url = https://github.com/whoshuu/cpr
