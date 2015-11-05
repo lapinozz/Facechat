@@ -22,7 +22,7 @@ set(FACECHAT_INCLUDE
     
 include_directories(extlib/cpr/include)
 
-add_library(${PROJECT_NAME} ${FACECHAT_SOURCE} ${FACECHAT_INCLUDE})
+add_library(${PROJECT_NAME} STATIC ${FACECHAT_SOURCE} ${FACECHAT_INCLUDE})
 
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)

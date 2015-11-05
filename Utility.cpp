@@ -143,7 +143,12 @@ std::string timestampToString(time_t timestamp, bool elapsed)
 
     if(elapsed)
     {
-        time_t tmpTime = difftime(time (NULL), timestamp);
+        time_t tmpTime;
+        if(timestamp < time (NULL))
+            tmpTime = difftime(time (NULL), timestamp);
+        else
+            tmpTime = difftime(timestamp, time (NULL));
+            
         timeinfo = gmtime(&tmpTime);
         timeinfo->tm_year -= 70;
 
