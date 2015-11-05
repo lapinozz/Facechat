@@ -188,6 +188,7 @@ public:
     std::string sendAttachement(std::string message, std::string filePath, UniversalID sendTo, bool isGroup = false);
     std::string sendUrl(std::string message, std::string url, UniversalID sendTo, bool isGroup = false);
     std::string sendSticker(std::string stickerID, UniversalID sendTo, bool isGroup = false);
+    std::string createGroup(std::string message, std::vector<UserID> otherUsers);
 
     void deleteMessage(std::string messageID);
     void markAsRead(UniversalID threadID);

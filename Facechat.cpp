@@ -303,6 +303,19 @@ std::string Facechat::sendSticker(std::string stickerID, UniversalID sendTo, boo
     return sendMessage("", sendTo, isGroup, payloadsPairs);
 }
 
+std::string Facechat::createGroup(std::string message, std::vector<UserID> otherUsers)
+{
+    std::vector<cpr::Pair> payloadsPairs;
+
+    if(otherUsers.size() < 2)
+        return "";
+
+    for(int x = 1; x < otherUsers.size(); x++)
+        payloadsPairs.push_back(cpr::Pair("message_batch[0][specific_to_list][" + std::to_string(x + 1) + "]", "fbid:"+std::to_string(otherUsers[x])));
+
+    return sendMessage(message, otherUsers[0], false, payloadsPairs);
+}
+
 std::string Facechat::getFacechatURL(std::string url)
 {
     std::vector<cpr::Pair> payloadsPairs;
