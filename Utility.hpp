@@ -21,7 +21,7 @@ std::string binaryStringToDecimalString(std::string binary);
 namespace __range_to_initializer_list
 {
 
-constexpr size_t DEFAULT_MAX_LENGTH = 256;
+constexpr size_t DEFAULT_MAX_LENGTH = 512;
 
 template <typename V> struct backingValue
 {

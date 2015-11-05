@@ -218,7 +218,10 @@ std::string Facechat::send(std::vector<cpr::Pair>& data)
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
     mPostSession.SetUrl(cpr::Url {send_message_url});
     cpr::Response r = mPostSession.Post();
-    return responseToJson(r)["payload"]["actions"][0]["message_id"];
+    if(responseToJson(r)["payload"]["actions"][0]["message_id"].is_string())
+        return responseToJson(r)["payload"]["actions"][0]["message_id"];
+    else
+        return "";
 }
 
 std::string Facechat::sendMessage(std::string message, UniversalID sendTo, bool isGroup, std::vector<cpr::Pair> datas)

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <cpr.h>
+#include "extlib/cpr/include/cpr.h"
+#include "extlib/cpr/include/util.h"
 
 #include <iostream>
 #include <map>
