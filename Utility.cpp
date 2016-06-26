@@ -36,7 +36,7 @@ std::string binaryStringToDecimalString(std::string binary)
 
         for(char& decChar : decimal)
         {
-            int d = decChar *2 + carry;
+            int d = decChar * 2 + carry;
             carry = d > 9;
             decChar = d % 10;
         }
@@ -46,6 +46,35 @@ std::string binaryStringToDecimalString(std::string binary)
     }
 
     return decimal;
+}
+
+std::vector<cpr::Pair> jsonToMessagebatch(const std::string& jsonString, const std::string& base)
+{
+    auto j = json::parse(jsonString);
+    std::vector<cpr::Pair> pairs;
+
+    std::function<void(json&, std::string)> eval = [&](json& j, std::string base)
+    {
+        if(j.is_array())
+        {
+            int x = 0;
+            for(json element : j)
+                eval(element, base + "[" + std::to_string(x++) + "]");
+        }
+        else if(j.is_object())
+        {
+            for(json::iterator it = j.begin(); it != j.end(); it++)
+                eval(it.value(), base + "[" + it.key() + "]");
+        }
+        else if(j.is_string())
+            pairs.push_back(cpr::Pair(base, (std::string)j.get<std::string>()));
+        else if(j.is_boolean())
+            pairs.push_back(cpr::Pair(base, bool(j.get<bool>() ? true : false)));
+    };
+
+    eval(j, base);
+
+    return pairs;
 }
 
 bool isBase64(const unsigned char& toTest)
@@ -148,7 +177,7 @@ std::string timestampToString(time_t timestamp, bool elapsed)
             tmpTime = difftime(time (NULL), timestamp);
         else
             tmpTime = difftime(timestamp, time (NULL));
-            
+
         timeinfo = gmtime(&tmpTime);
         timeinfo->tm_year -= 70;
 

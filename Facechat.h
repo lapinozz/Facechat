@@ -21,7 +21,7 @@ public:
 
         int messageCount;
 
-        long long int threadID;
+        ThreadID threadID;
     };
 
     struct Group
@@ -62,6 +62,8 @@ public:
         std::string messageID;
 
         long long int conversationID = 0; //most of the time only set for group
+
+        time_t timestamp = 0;
 
         bool isGroup = false;
         Group group;
@@ -184,7 +186,7 @@ public:
     int login(std::string email, std::string password);
     void logout();
 
-    std::string sendMessage(std::string message, UniversalID sendTo, bool isGroup = false, std::vector<cpr::Pair> datas = std::vector<cpr::Pair>());
+    std::string sendMessage(std::string message, UniversalID sendTo, bool isGroup = false, std::vector<cpr::Pair> datas = {{}});
     std::string sendAttachement(std::string message, std::string filePath, UniversalID sendTo, bool isGroup = false);
     std::string sendUrl(std::string message, std::string url, UniversalID sendTo, bool isGroup = false);
     std::string sendSticker(std::string stickerID, UniversalID sendTo, bool isGroup = false);
@@ -196,7 +198,7 @@ public:
 
     void deleteThread(UniversalID id);
     Facechat::Thread getThread(UniversalID id);
-    std::vector<Facechat::Message> readThread(UniversalID id, int offset = 0, int limit = 20, bool isGroup = false);
+    std::vector<Facechat::Message> readThread(UniversalID id, int offset = 0, int limit = 20, time_t timestamp = time(NULL), bool isGroup = false);
     std::vector<Facechat::Thread> findThread(std::string name, int offset = 0, int limit = 20);
     std::vector<Facechat::Thread> listThread(int offset = 0, int limit = 20);
 
@@ -215,7 +217,7 @@ public:
 
 protected:
 private:
-    std::string send(std::vector<cpr::Pair>& data);
+    std::string send(const std::vector<cpr::Pair>& data);
 
     std::string getFacechatURL(std::string url);
     json uploadFile(std::string filePath);
@@ -233,6 +235,7 @@ private:
 
     std::deque<MessagingEvent> mEvents;
     std::mutex mEventsMutex;
+    std::mutex mDeadMutex;
 
     std::thread mUpdateThread;
     std::atomic<bool> mStopThread;
@@ -245,12 +248,16 @@ private:
 
     std::string mUserID;
     std::string mDTSG;
+    std::string mRevision;
     std::string mSticky;
     std::string mPool;
 
     std::string seq = "0";
 
-    const std::string user_agent = "Mozilla/5.0 (Wihttps://www.facebook.com/ajax/mercury/threadlist_info.phpndows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0";
+//    const std::string user_agent = "Mozilla/5.0 (Windows NT 5.1; rv:31.0) Gecko/20100101 Firefox/31.0";
+    const std::string user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/601.1.10 (KHTML, like Gecko) Version/8.0.5 Safari/601.1.10";
+
+    const std::string test_url = "https://www.httpbin.org/post";
 
     const std::string login_url = "https://www.facebook.com/login.php";
     const std::string logout_url = "https://www.facebook.com/logout.php";

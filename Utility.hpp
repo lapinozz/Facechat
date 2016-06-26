@@ -18,10 +18,12 @@ std::string timestampToString(time_t timestamp, bool elapsed = false);
 std::string toBase(unsigned long long int value, int base);
 std::string binaryStringToDecimalString(std::string binary);
 
+std::vector<cpr::Pair> jsonToMessagebatch(const std::string& json, const std::string& base);
+
 namespace __range_to_initializer_list
 {
 
-constexpr size_t DEFAULT_MAX_LENGTH = 512;
+constexpr size_t DEFAULT_MAX_LENGTH = 512/6;
 
 template <typename V> struct backingValue
 {
