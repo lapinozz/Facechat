@@ -265,15 +265,6 @@ json Facechat::responseToJson(cpr::Response& response)
     return json();
 }
 
-std::string Facechat::generateOfflineThreadingID()
-{
-    std::random_device rd;
-    std::default_random_engine engine(rd());
-    std::uniform_int_distribution<long int> uniform_dist(0, 4294967295);
-
-    return binaryStringToDecimalString(toBase(time(NULL), 2) + toBase(uniform_dist(engine), 2));
-}
-
 std::string Facechat::send(const std::vector<cpr::Pair>& data)
 {
     std::vector<cpr::Pair> payloadsPairs;
@@ -285,19 +276,13 @@ std::string Facechat::send(const std::vector<cpr::Pair>& data)
     payloadsPairs.push_back(cpr::Pair("message_batch[0][source_tags][0]", "source:chat"));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][ui_push_phase]", "V3"));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][status]", "0"));
+
 //    std::string threadingID = Facechat::generateOfflineThreadingID();
-//    std::string threadingID = "6149052398431498505";
-    std::string threadingID = "6150007224881098906";
-//    std::string threadingID = "";
+//    std::string threadingID = "6150007224881098906";
 //    payloadsPairs.push_back(cpr::Pair("message_batch[0][message_id]", threadingID));
 //    payloadsPairs.push_back(cpr::Pair("message_batch[0][offline_threading_id]", threadingID));
 
-//    payloadsPairs.push_back(cpr::Pair("message_batch[0]", ""));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][has_attachment]", true));
-//    payloadsPairs.push_back(cpr::Pair("message_batch[0][thread_id]", ""));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][timestamp]", "999"));
-//    payloadsPairs.push_back(cpr::Pair("message_batch[0][timestamp_absolute]", "Aujourdhui"));
-//    payloadsPairs.push_back(cpr::Pair("message_batch[0][timestamp_relative]", "14:53"));
+    payloadsPairs.push_back(cpr::Pair("message_batch[0][has_attachment]", false));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][timestamp_time_passed]", 0));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][is_unread]", false));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][is_forward]", false));
@@ -307,13 +292,11 @@ std::string Facechat::send(const std::vector<cpr::Pair>& data)
     payloadsPairs.push_back(cpr::Pair("message_batch[0][is_filtered_content_quasar]", false));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][is_filtered_content_invalid_app]", false));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][is_spoof_warning]", false));
-//    payloadsPairs.push_back(cpr::Pair("message_batch[0][html_body]", false));
 
     payloadsPairs.insert(payloadsPairs.end(), data.begin(), data.end());
 
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
     mPostSession.SetUrl(cpr::Url {send_message_url});
-//    mPostSession.SetUrl(cpr::Url {"http://www.httpbin.org/post"});
     cpr::Response r = mPostSession.Post();
     std::cout << r.text << std::endl;
     if(responseToJson(r)["payload"]["actions"][0]["message_id"].is_string())
@@ -553,10 +536,10 @@ void Facechat::addUserToGroup(UserID userID, ThreadID group)
     payloadsPairs.push_back(cpr::Pair("message_batch[0][manual_retry_cnt]", "0"));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][threading_id]", ""));
 
-    std::string threadingID = Facechat::generateOfflineThreadingID();
-//    payloadsPairs.push_back(cpr::Pair("message_batch[0][message_id]", "6064083385041342768"));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][message_id]", threadingID));
-    payloadsPairs.push_back(cpr::Pair("message_batch[0][offline_threading_id]", threadingID));
+//    std::string threadingID = Facechat::generateOfflineThreadingID();
+//    std::string threadingID = "";
+//    payloadsPairs.push_back(cpr::Pair("message_batch[0][message_id]", threadingID));
+//    payloadsPairs.push_back(cpr::Pair("message_batch[0][offline_threading_id]", threadingID));
 
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
     mPostSession.SetUrl(cpr::Url {send_message_url});
