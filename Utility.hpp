@@ -3,6 +3,8 @@
 
 #include "stdinclude.hpp"
 
+#include <curl/curl.h>
+
 std::string replaceAll(std::string str, const std::string& from, const std::string& to);
 
 bool isBase64(const unsigned char& toTest);
@@ -19,6 +21,28 @@ std::string toBase(unsigned long long int value, int base);
 std::string binaryStringToDecimalString(std::string binary);
 
 std::vector<cpr::Pair> jsonToMessagebatch(const std::string& json, const std::string& base);
+
+inline std::string imgurUpload(std::string content)
+{
+    cpr::Session s;
+    s.SetHeader(cpr::Header{{"Authorization", "Client-ID 6a5400948b3b376"}, {"Accept", "application/json"}});
+    s.SetBody(cpr::Body(content));
+    s.SetUrl("https://api.imgur.com/3/image");
+
+    auto r = s.Post();
+
+    r.text = r.text.substr(r.text.find("\"link\":\"") + 8);
+    r.text = r.text.substr(0, r.text.find("\""));
+
+    r.text = replaceAll(r.text, "\\/", "/");
+
+    return r.text;
+}
+
+inline std::string shortenUrl(std::string url)
+{
+    return cpr::Get(cpr::Url("https://is.gd/create.php?format=simple&url=" + cpr::util::urlEncode(url))).text;
+}
 
 namespace __range_to_initializer_list
 {

@@ -232,6 +232,7 @@ private:
 
     static Thread parseThread(json& j);
     static Message parseMessage(json& j);
+    static Message parseUpdatMessage(json& j);
 
     std::deque<MessagingEvent> mEvents;
     std::mutex mEventsMutex;

@@ -1,5 +1,6 @@
 #include "Facechat.h"
 
+
 Facechat::Facechat()
 {
 //    mDefaultCookie["_js_reg_fb_gate"] = login_url;
@@ -108,7 +109,7 @@ int Facechat::login(std::string email, std::string password)
         mStopThread = false;
         mUpdateThread = std::thread(std::bind(&Facechat::update, this));
 
-//        mUpdateThread.detach();
+        mUpdateThread.detach();
         return 1;
     }
     else
@@ -181,17 +182,19 @@ void Facechat::update()
             {
                 MessagingEvent event;
 
-                if(j[x]["type"] == "typ")
+                auto m = j[x];
+
+                if(m["type"] == "typ")
                 {
                     event.type = MessagingEvent::TYPING_STATUS;
-                    event.typingStatus.from = j[x]["from"];
-                    event.typingStatus.fromMobile = (!j[x]["from_mobile"].is_null() ? j[x]["from_mobile"].get<bool>() : false);
-                    event.typingStatus.isTyping = j[x]["st"] == "true";
+                    event.typingStatus.from = m["from"];
+                    event.typingStatus.fromMobile = (!m["from_mobile"].is_null() ? m["from_mobile"].get<bool>() : false);
+                    event.typingStatus.isTyping = m["st"] == "true";
                 }
-                else if(j[x]["type"] == "buddylist_overlay")
+                else if(m["type"] == "buddylist_overlay")
                 {
                     event.type = MessagingEvent::ONLINE_STATUS;
-                    json::iterator it = j[x]["overlay"].begin();
+                    json::iterator it = m["overlay"].begin();
                     std::string from =  it.key();
                     event.onlineStatus.from = std::stoll(from);
                     event.onlineStatus.timestamp = it.value()["la"];
@@ -201,25 +204,29 @@ void Facechat::update()
 //                    event.onlineStatus.onWeb                 = OnlineStatus::stringToStatus(it.value()["p"]["webStatus"]);
 //                    event.onlineStatus.onOther               = OnlineStatus::stringToStatus(it.value()["p"]["otherStatus"]);
                 }
-                else if((j[x]["type"] == "messaging" && j[x]["event"] == "deliver"))
+                else if((m["type"] == "delta" && m["delta"]["class"] == "NewMessage"))
                 {
                     event.type = MessagingEvent::MESSAGE;
-                    event.message = parseMessage(j[x]["message"]);
+//                    event.message = parseMessage(m["delta"]);
+                    event.message = parseUpdatMessage(m["delta"]);
                 }
-                else if((j[x]["type"] == "messaging" && j[x]["event"] == "m_read_receipt"))
+                else if((m["type"] == "messaging" && m["event"] == "m_read_receipt"))
                 {
                     event.type = MessagingEvent::READ_STATUS;
                     ReadStatus readStatus;
-                    readStatus.from = j[x]["reader"];
+                    readStatus.from = m["reader"];
                     event.readStatus = readStatus;
                 }
                 else
                 {
-//                    std::cout << j[x].dump(4) << std::endl;
+//                    std::cout << m.dump(4) << std::endl;
 //                    continue;
                 }
 
-//                std::cout << j[x].dump(4) << std::endl;
+//                std::cout << std::endl;
+//                std::cout << x << std::endl;
+//                std::cout << m.dump(4) << std::endl;
+//                std::cout << std::endl;
 
                 mEventsMutex.lock();
                 mEvents.push_front(event);
@@ -279,8 +286,13 @@ std::string Facechat::send(const std::vector<cpr::Pair>& data)
 
 //    std::string threadingID = Facechat::generateOfflineThreadingID();
 //    std::string threadingID = "6150007224881098906";
+    std::string threadingID = "";
 //    payloadsPairs.push_back(cpr::Pair("message_batch[0][message_id]", threadingID));
 //    payloadsPairs.push_back(cpr::Pair("message_batch[0][offline_threading_id]", threadingID));
+    payloadsPairs.push_back(cpr::Pair("message_batch[0][thread_id]", threadingID));
+
+
+    payloadsPairs.push_back(cpr::Pair("message_batch[0][timestamp]", std::to_string(time(NULL))));
 
     payloadsPairs.push_back(cpr::Pair("message_batch[0][has_attachment]", false));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][timestamp_time_passed]", 0));
@@ -297,8 +309,8 @@ std::string Facechat::send(const std::vector<cpr::Pair>& data)
 
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
     mPostSession.SetUrl(cpr::Url {send_message_url});
+////    mPostSession.SetUrl(cpr::Url {test_url});
     cpr::Response r = mPostSession.Post();
-    std::cout << r.text << std::endl;
     if(responseToJson(r)["payload"]["actions"][0]["message_id"].is_string())
         return responseToJson(r)["payload"]["actions"][0]["message_id"];
     else
@@ -350,6 +362,7 @@ std::string Facechat::sendUrl(std::string message, std::string url, UniversalID 
     payloadsPairs.push_back(cpr::Pair("message_batch[0][shareable_attachment][share_type]", 100));
 
     json j = json::parse(getFacechatURL(url));
+    std::cout << j.dump(4) << std::endl;
     std::string base = "message_batch[0][shareable_attachment][share_params]";
 
     std::function<void(json&, std::string, std::vector<cpr::Pair>&)> eval;
@@ -497,7 +510,8 @@ void Facechat::setGroupTitle(UniversalID id, std::string title)
     payloadsPairs.push_back(cpr::Pair("message_batch[0][manual_retry_cnt]", "0"));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][threading_id]", ""));
 
-    std::string threadingID = Facechat::generateOfflineThreadingID();
+//    std::string threadingID = Facechat::generateOfflineThreadingID();
+    std::string threadingID;
     payloadsPairs.push_back(cpr::Pair("message_batch[0][message_id]", threadingID));
     payloadsPairs.push_back(cpr::Pair("message_batch[0][offline_threading_id]", threadingID));
 
@@ -803,17 +817,15 @@ std::vector<Facechat::Message> Facechat::readThread(UniversalID id, int offset, 
     payloadsPairs.push_back(cpr::Pair("messages[" + key + "][" + std::to_string(id) + "][offset]", (int)offset));
     payloadsPairs.push_back(cpr::Pair("messages[" + key + "][" + std::to_string(id) + "][limit]", (int)limit));
     payloadsPairs.push_back(cpr::Pair("messages[" + key + "][" + std::to_string(id) + "][timestamp]", std::to_string(timestamp)));
-//    payloadsPairs.push_back(cpr::Pair("messages[" + key + "][" + std::to_string(id) + "][timestamp]", std::to_string(time(NULL) - 1000)));
-//    payloadsPairs.push_back(cpr::Pair("messages[" + key + "][" + std::to_string(id) + "][timestamp]", ""));
-//    payloadsPairs.push_back(cpr::Pair("messages[" + key + "][" + std::to_string(id) + "][timestamp]", 1466385476231));
 
     mPostSession.SetPayload(cpr::Payload {range_to_initializer_list(payloadsPairs.begin(), payloadsPairs.end())});
 
     mPostSession.SetUrl(cpr::Url {thread_info_url});
-//    mPostSession.SetUrl(cpr::Url {test_url});
 
     cpr::Response r = mPostSession.Post();
 //    std::cout << r.text << std::endl;
+
+    std::cout << responseToJson(r).dump(4) << std::endl;;
 
     std::vector<Facechat::Message> messages;
 
@@ -828,15 +840,13 @@ std::vector<Facechat::Message> Facechat::readThread(UniversalID id, int offset, 
             {
                 if(action["action_type"].is_null())
                     break;
-                    try
-    {
-                if(action["action_type"] == "ma-type:user-generated-message")
-                    messages.push_back(parseMessage(action));
-                    }
-    catch(...)
-    {}
-
-//                std::cout << action.dump(4) << std::endl;
+                try
+                {
+                    if(action["action_type"] == "ma-type:user-generated-message")
+                        messages.push_back(parseMessage(action));
+                }
+                catch(...)
+                {}
             }
         }
     }
@@ -933,6 +943,27 @@ Facechat::Message Facechat::parseMessage(json& j)
             message.asAttachment = false;
     }
 
+    return message;
+}
+
+Facechat::Message Facechat::parseUpdatMessage(json& j)
+{
+    Facechat::Message message;
+
+    auto mm = j["messageMetadata"];
+    std::cout << mm.dump(3) << std::endl;
+
+    message.body = (j["body"].is_string() ? j["body"].get<std::string>() : "");
+
+    message.messageID = mm["messageId"].get<std::string>();
+
+    message.to = std::stoll(mm["threadKey"]["otherUserFbId"].get<std::string>());
+
+    message.timestamp = std::stoll(mm["timestamp"].get<std::string>());
+
+    message.from = std::stoll(mm["actorFbId"].get<std::string>());
+
+    message.conversationID = std::stoll(mm["threadKey"]["otherUserFbId"].get<std::string>());
     return message;
 }
 
