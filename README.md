@@ -11,8 +11,7 @@ Usage example:
 
 ```cpp
 Facechat f;
-f.login("myemail@gmail.com", "password123");
-if(f.login("monstrefou@gmail.com", "***REMOVED***"))
+if(f.login("myemail@gmail.com", "password123"))
   std::cout << "login succes" << std::endl;
 else
   std::cout << "login fail" << std::endl;
